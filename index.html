@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人博客 - Emerald Glaze</title>
+    <!-- Tailwind CSS 用于快速布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter 字体 -->
+    <link href="src/Google-Inter.ttf" rel="stylesheet">
+    <link href="src/style.css" rel="stylesheet">
+    <!-- Lucide Icons 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- <style>
+        :root {
+            --primary-green: #10b981;
+            --accent-green: #34d399;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+            background-attachment: fixed;
+            color: #064e3b;
+            overflow-x: hidden;
+        }
+
+        /* 亚克力效果基础类 */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        /* 页面切换动画 */
+        .view-content {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(20px);
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 鼠标悬停动画 */
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.2);
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-green);
+            border-radius: 10px;
+        }
+
+        /* 装饰背景圆球 */
+        .blob {
+            position: fixed;
+            z-index: -1;
+            filter: blur(60px);
+            opacity: 0.4;
+            border-radius: 50%;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0); }
+            to { transform: translate(100px, 100px); }
+        }
+    </style> -->
+</head>
+<body>
+    <div class="blob w-64 h-64 bg-emerald-300 top-10 left-10"></div>
+    <div class="blob w-96 h-96 bg-green-200 bottom-10 right-10" style="animation-delay: -5s;"></div>
+
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-2xl">
+        <div class="glass-panel rounded-2xl px-6 py-3 flex justify-between items-center">
+            <h1 class="font-bold text-xl tracking-tight text-emerald-800" id="site-logo">BLOG.</h1>
+            <div class="flex gap-1 md:gap-4">
+                <button onclick="showView('home')" class="nav-link px-3 py-1.5 rounded-lg transition-all hover:bg-white/40 text-sm font-medium">首页</button>
+                <button onclick="showView('articles')" class="nav-link px-3 py-1.5 rounded-lg transition-all hover:bg-white/40 text-sm font-medium">文章</button>
+                <button onclick="showView('about')" class="nav-link px-3 py-1.5 rounded-lg transition-all hover:bg-white/40 text-sm font-medium">关于</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32 pb-20 px-6 max-w-4xl mx-auto">
+        
+        <!-- 首页视图 -->
+        <section id="home" class="view-content active">
+            <div class="text-center mb-16">
+                <div class="relative inline-block mb-6">
+                    <img id="profile-pic" src="https://placehold.co/150x150/d1fae5/065f46?text=Avatar" class="w-32 h-32 rounded-full border-4 border-white shadow-xl mx-auto object-cover" alt="Avatar">
+                    <span class="absolute bottom-2 right-2 w-6 h-6 bg-emerald-500 border-4 border-white rounded-full"></span>
+                </div>
+                <h2 id="profile-name" class="text-4xl font-extrabold mb-4 text-emerald-900">你好，我是 <span class="text-emerald-600">加载中...</span></h2>
+                <p id="profile-bio" class="text-lg text-emerald-700/80 max-w-xl mx-auto leading-relaxed">
+                    加载个人简介中...
+                </p>
+                
+                <div class="mt-8 flex justify-center gap-4" id="social-links">
+                    <!-- 动态加载社交链接 -->
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6" id="featured-posts">
+                <!-- 动态加载精选文章 -->
+            </div>
+        </section>
+
+        <!-- 文章列表视图 -->
+        <section id="articles" class="view-content">
+            <h3 class="text-3xl font-bold mb-8 flex items-center gap-2">
+                <img alt="A Book" src="src/book-open.svg" class="text-emerald-600"> 全部文章
+            </h3>
+            <div class="flex flex-col gap-4" id="all-articles-list">
+                <!-- 动态加载全部文章 -->
+            </div>
+        </section>
+
+        <!-- 关于视图 -->
+        <section id="about" class="view-content">
+            <div class="glass-panel rounded-3xl p-8 md:p-12">
+                <h3 class="text-3xl font-bold mb-6">关于我</h3>
+                <div class="prose text-emerald-800/80 leading-loose space-y-4" id="about-content">
+                    <!-- 动态加载关于内容 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-10 text-emerald-600/60 text-sm">
+        <p>© <span id="year"></span> <span id="footer-name"></span>. Built with 💚 & Acrylic Style.</p>
+    </footer>
+
+    <script>
+        const BLOG_CONFIG = {
+            name: "LiBertY",
+            title: "是个傻福",
+            bio: "I record.",
+            avatar: './src/Avatar.jpg',
+            social: [
+                { plarform: "GitHub", icon: "src/GitHub_Invertocat_Black.svg", url: "https://github.com/liumouren2006" },
+                { plarform: "GitHub",icon: "src/Bilibili_tv_a.svg", url: "https://twitter.com" },
+                { plarform: "GitHub",icon: "src/mail.svg", url: "mailto:hello@example.com" }
+            ],
+            articles: [
+                { id: 1, title: "如何构建一个响应式的亚克力风格网页", date: "2024-05-10", category: "技术", excerpt: "探索 CSS Backdrop-filter 与现代 UI 设计的结合之路..." ,link: "Articles/template.html"},
+                { id: 2, title: "Why objects move that way?", date: "2026-05-13", category: "物理", excerpt: "“Lorsqu’il arrive quelque changement dans la Nature, la quantité d’Action nécessaire pour ce changement est la plus petite qu’il soit possible.”" ,link: "Articles/template.html"},
+                { id: 3, title: "这只是一个测试文章", date: "2026-05-13", category: "Test", excerpt: "干嘛...都说了只是测试。" ,link: "Articles/template.html"}
+            ],
+            aboutLong: `
+                <p>我</p>
+                <p>苦逼大学生, 啥也不会, 所以仍在学习中 (才怪) .</p>
+                <div class='mt-6 p-4 bg-emerald-100/50 rounded-xl border border-emerald-200'>
+                    <strong>我会啥：</strong> C (假的), Theoretical Phycics, HTML/CSS(大嘘x1), JavaScript (大嘘x2), Mathematic (仅限兴趣).
+                </div>
+            `
+        };
+
+        function initBlog() {
+            // 设置基础信息
+            document.title = `${BLOG_CONFIG.name} 的个人主页`;
+            document.getElementById('profile-name').innerHTML = `你好，我是 <span class="text-emerald-600">${BLOG_CONFIG.name}</span>`;
+            document.getElementById('profile-bio').innerText = BLOG_CONFIG.bio;
+            document.getElementById('profile-pic').src = BLOG_CONFIG.avatar;
+            document.getElementById('footer-name').innerText = BLOG_CONFIG.name;
+            document.getElementById('year').innerText = new Date().getFullYear();
+            document.getElementById('about-content').innerHTML = BLOG_CONFIG.aboutLong;
+
+            // 渲染社交链接
+            const socialContainer = document.getElementById('social-links');
+            BLOG_CONFIG.social.forEach(item => {
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.className = "w-12 h-12 glass-panel rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all hover-lift";
+                link.innerHTML = `<img alt="${item.plarform}" src="${item.icon}" class="w-5 h-5">`;
+                socialContainer.appendChild(link);
+            });
+
+            // 渲染精选文章
+            const featuredContainer = document.getElementById('featured-posts');
+            BLOG_CONFIG.articles.slice(0, 2).forEach(post => {
+                featuredContainer.innerHTML += `
+                    <a href=${post.link}>    
+                        <div class="glass-panel p-6 rounded-3xl hover-lift cursor-pointer group">
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest">${post.category}</span>
+                            <h4 class="text-xl font-bold mt-2 mb-3 group-hover:text-emerald-600 transition-colors">${post.title}</h4>
+                            <p class="text-emerald-800/60 text-sm mb-4">${post.excerpt}</p>
+                            <div class="flex justify-between items-center text-xs text-emerald-800/40 font-medium">
+                                <span>${post.date}</span>               
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+
+            // 渲染文章列表
+            const allList = document.getElementById('all-articles-list');
+            BLOG_CONFIG.articles.forEach(post => {
+                allList.innerHTML += `
+                    <a href=${post.link}>
+                        <div class="glass-panel p-4 rounded-2xl hover:bg-white/60 transition-all cursor-pointer flex justify-between items-center">
+                            <div>
+                                <h4 class="font-semibold text-emerald-900">${post.title}</h4>
+                                <p class="text-xs text-emerald-600/60">${post.date} · ${post.category}</p>
+                            </div>
+                            <img alt="->" src="src/arrow-right.svg" class="w-5 h-5 text-emerald-300">
+                        </div>
+                    </a>
+                `;
+            });
+
+            // 刷新图标
+            lucide.createIcons();
+        }
+
+        function showView(viewId) {
+            const views = document.querySelectorAll('.view-content');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            // 隐藏所有视图
+            views.forEach(v => {
+                v.classList.remove('active');
+                setTimeout(() => { if(!v.classList.contains('active')) v.style.display = 'none'; }, 500);
+            });
+
+            // 显示目标视图
+            const target = document.getElementById(viewId);
+            target.style.display = 'block';
+            setTimeout(() => {
+                target.classList.add('active');
+            }, 50);
+
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 页面加载运行
+        window.onload = () => {
+            initBlog();
+            // 简单处理初次进入显示
+            showView('home');
+        };
+    </script>
+</body>
+</html>

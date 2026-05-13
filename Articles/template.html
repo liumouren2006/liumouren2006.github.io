@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章标题 - Emerald Glaze</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="../src/Google-Inter.ttf" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-green: #10b981;
+            --accent-green: #34d399;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+            background-attachment: fixed;
+            color: #064e3b;
+        }
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+        /* 文章内容样式优化 */
+        .article-body { line-height: 1.8; color: #065f46; }
+        .article-body p { margin-bottom: 1.5rem; }
+        .article-body h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 1rem; color: #047857; }
+        .article-body img { border-radius: 1.5rem; margin: 2rem 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        
+        .blob { position: fixed; z-index: -1; filter: blur(60px); opacity: 0.3; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <div class="blob w-64 h-64 bg-emerald-300 top-10 left-10"></div>
+
+    <!-- 导航栏 (注意：这里的链接可能需要调整路径，如果文件在 posts/ 目录下，返回首页需用 ../index.html) -->
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-2xl">
+        <div class="glass-panel rounded-2xl px-6 py-3 flex justify-between items-center">
+            <a href="../index.html" class="font-bold text-xl tracking-tight text-emerald-800">BLOG.</a>
+            <div class="flex gap-4">
+                <a href="../index.html" class="px-3 py-1.5 rounded-lg hover:bg-white/40 text-sm font-medium">首页</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32 pb-20 px-6 max-w-3xl mx-auto">
+        <a href="../index.html" class="mb-8 inline-flex items-center gap-2 text-emerald-600 font-medium hover:-translate-x-1 transition-transform text-sm">
+            <img alt="<-" src="../src/arrow-left.svg" class="w-4 h-4"> 返回首页
+        </a>
+
+        <div class="glass-panel rounded-[2.5rem] p-8 md:p-14">
+            <header class="mb-10 pb-8 border-b border-emerald-100">
+                <span class="text-xs font-bold text-emerald-500 uppercase tracking-widest">技术分类</span>
+                <h1 class="text-4xl font-extrabold text-emerald-900 mt-4 mb-4 leading-tight">这里是文章标题</h1>
+                <div class="text-emerald-800/40 text-sm">发布日期：2026年5月13日</div>
+            </header>
+
+            <article class="article-body">
+                <p>这是文章的第一段内容。对每篇文章我可引入不同的 JS 库。</p>
+                
+                <h2>为什么选择多页面？</h2>
+                <p>每个 HTML 文件都是独立的，这非常利于搜索引擎（Google/Baidu）抓取你的内容。此外，当你的文章非常多时，这种结构更加稳健。</p>
+                
+                <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80" alt="示例图片">
+
+                <p>...</p>
+            </article>
+        </div>
+    </main>
+
+    <footer class="text-center py-10 text-emerald-600/40 text-sm">
+        <p>© 2026 <i style="color:#064e3b;"> LibertY  </i>. Built with 💚</p>
+    </footer>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
