@@ -8,7 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter 字体 -->
     <link href="src/Google-Inter.ttf" rel="stylesheet">
-    <link href="src/style.css" rel="stylesheet">
+    <link href="src/pub/style.css" rel="stylesheet">
+    <link href="src/pub/Anon.ico" rel="icon" type="image/x-icon">
     <!-- Lucide Icons 图标库 -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
@@ -130,7 +131,7 @@
         <!-- 文章列表视图 -->
         <section id="articles" class="view-content">
             <h3 class="text-3xl font-bold mb-8 flex items-center gap-2">
-                <img alt="A Book" src="src/book-open.svg" class="text-emerald-600"> 全部文章
+                <img alt="A Book" src="src/pub/book-open.svg" class="text-emerald-600"> 全部文章
             </h3>
             <div class="flex flex-col gap-4" id="all-articles-list">
                 <!-- 动态加载全部文章 -->
@@ -157,11 +158,11 @@
             name: "LiBertY",
             title: "是个傻福",
             bio: "I record.",
-            avatar: './src/Avatar.jpg',
+            avatar: './src/pub/Avatar.jpg',
             social: [
-                { plarform: "GitHub", icon: "src/GitHub_Invertocat_Black.svg", url: "https://github.com/liumouren2006" },
-                { plarform: "GitHub",icon: "src/Bilibili_tv_a.svg", url: "https://twitter.com" },
-                { plarform: "GitHub",icon: "src/mail.svg", url: "mailto:hello@example.com" }
+                { plarform: "GitHub", icon: "src/pub/GitHub_Invertocat_Black.svg", url: "https://github.com/liumouren2006" },
+                { plarform: "GitHub",icon: "src/pub/Bilibili_tv_a.svg", url: "https://twitter.com" },
+                { plarform: "GitHub",icon: "src/pub/mail.svg", url: "mailto:hello@example.com" }
             ],
             articles: [
                 { id: 1, title: "如何构建一个响应式的亚克力风格网页", date: "2024-05-10", category: "技术", excerpt: "探索 CSS Backdrop-filter 与现代 UI 设计的结合之路..." ,link: "Articles/template.html"},
@@ -224,7 +225,7 @@
                                 <h4 class="font-semibold text-emerald-900">${post.title}</h4>
                                 <p class="text-xs text-emerald-600/60">${post.date} · ${post.category}</p>
                             </div>
-                            <img alt="->" src="src/arrow-right.svg" class="w-5 h-5 text-emerald-300">
+                            <img alt="->" src="src/pub/arrow-right.svg" class="w-5 h-5 text-emerald-300">
                         </div>
                     </a>
                 `;
