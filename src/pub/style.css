@@ -4,27 +4,69 @@
 :root {
     --primary-green: #10b981;
     --accent-green: #34d399;
-    --glass-bg: rgba(255, 255, 255, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.2);
+    /* 略微降低透明度，增加白色的厚重感，并使用更细腻的纯白高光边框 */
+    --glass-bg: rgba(255, 255, 255, 0.4); 
+    --glass-border: rgba(255, 255, 255, 0.45);
+    /* 增加一个非常柔和的层级阴影 */
+    --glass-shadow: 0 8px 32px 0 rgba(6, 78, 59, 0.08); 
 }
 
 /* 2. 基础布局 */
+/* 修改原有的 body：移除 background 相关的属性，保留基设置 */础
 body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
-    background-attachment: fixed;
+    background-color: #f0fdf4; /* 滚动到底部时的纯色基底 */
     color: #064e3b;
     overflow-x: hidden;
-    margin: 0; /* 建议加上，消除浏览器默认边距 */
+    margin: 0;
+    position: relative;
+}
+
+/* --- 新增：独立的视差图片层 --- */
+.bg-parallax-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120vh; /* 比屏幕高 20vh，预留向上滚动的空间 */
+    background: url('../homepage/m.jpg') no-repeat center center;
+    background-size: cover;
+    z-index: -3; /* 保证在最底层 */
+    pointer-events: none;
+    will-change: transform; /* 提示浏览器开启 GPU 加速 */
+}
+
+/* --- 新增：独立的视差渐变层 --- */
+.bg-parallax-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 200vh; /* 极高的高度，保证怎么滚动都不会漏底 */
+    background: linear-gradient(
+        to bottom,
+        rgba(240, 253, 244, 0) 10%,   /* 原 100vh 的 20% 也就是现在的 200vh 的 10% */
+        #f0fdf4 50%,                  /* 到屏幕底部时完全融入绿色基底 */
+        #f0fdf4 100%
+    );
+    z-index: -2; /* 覆盖在图片之上，但仍处于内容底层 */
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* 保证页面内容在顶层 (保留你原本的代码) */
+body > * {
+    position: relative;
+    z-index: 1;
 }
 
 /* 3. 亚克力效果基础类 */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(16px); /* 提高模糊半径，让背后的图片更有朦胧感 */
+    backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    box-shadow: var(--glass-shadow);
 }
 
 /* 4. 页面切换动画 */
@@ -43,15 +85,21 @@ body {
 
 /* 5. 鼠标悬停动画 */
 .hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                background-color 0.4s ease, 
+                box-shadow 0.4s ease;
 }
 
 .hover-lift:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.2);
+    transform: translateY(-6px);
+    /* 悬停时，玻璃变得更白、更厚实 */
+    background-color: rgba(255, 255, 255, 0.65); 
+    /* 阴影加深，并带有一点生态绿的色彩晕染 */
+    box-shadow: 0 20px 40px -10px rgba(6, 78, 59, 0.15),
+                0 0 0 1px rgba(16, 185, 129, 0.2); 
 }
 
-/* 6. 文本多行省略 (新增：建议保留，配合你的简介缩略) */
+/* 6. 文本多行省略 (配合你的简介缩略) */
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -88,6 +136,87 @@ body {
     opacity: 0.4;
     border-radius: 50%;
     animation: move 20s infinite alternate;
+}
+
+ul.pagination {
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+ul.pagination li {display: inline;}
+
+ul.pagination li a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: background-color .3s;
+}
+
+ul.pagination li a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+ul.pagination li a:hover:not(.active) {background-color: #ddd;}
+
+/* 分页器样式 */
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+.pagination li {
+    display: inline-block;
+}
+.pagination a, .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.4);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #065f46;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.pagination a:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    transform: translateY(-2px);
+}
+.pagination .active {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+.pagination .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.2);
+}
+.pagination .disabled:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.FUCK{
+    color:#5e55a2;
+    size:16em;
 }
 
 @keyframes move {
