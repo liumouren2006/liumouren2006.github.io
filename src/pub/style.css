@@ -138,7 +138,7 @@ body > * {
     animation: move 20s infinite alternate;
 }
 
-ul.pagination {
+/* ul.pagination {
     display: inline-block;
     padding: 0;
     margin: 0;
@@ -159,10 +159,10 @@ ul.pagination li a.active {
     color: white;
 }
 
-ul.pagination li a:hover:not(.active) {background-color: #ddd;}
+ul.pagination li a:hover:not(.active) {background-color: #ddd;} */
 
 /* 分页器样式 */
-.pagination {
+/* .pagination {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
@@ -212,13 +212,119 @@ ul.pagination li a:hover:not(.active) {background-color: #ddd;}
     transform: none;
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.2);
-}
+} */
 
 .FUCK{
     color:#5e55a2;
     size:16em;
 }
 
+/* --- 基础分页器样式优化 --- */
+.pagination {
+    display: flex !important;    /* 强行启用 Flex 布局，干掉历史 float 带来的倒序错位 */
+    gap: 0.5rem;                 /* PC 端方格间距 */
+    flex-wrap: nowrap !important;/* 极其关键：强行单行平铺，绝不允许手机端换行 */
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 2rem 0;
+    list-style: none;
+    width: 100%;
+}
+
+.pagination li {
+    display: flex !important ;   /* 统一声明为块级，清除老代码 inline 属性 */
+}
+
+/* 拉齐物理尺寸：让所有导航元素（无论 a 还是 span）共享相同的圆角亚克力磨砂方格 */
+.pagination a, 
+.pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;           /* PC 端标准正方形 */
+    height: 2.5rem;
+    padding: 0 0.75rem;          /* 允许“首页”等文字自适应展宽，数字保持正方形 */
+    border-radius: 0.75rem;      /* 精致小圆角 */
+    background: var(--glass-bg); /* 继承你定义的磨砂玻璃底色 */
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    color: #065f46 !important;   /* 强行统一文本颜色，防止在禁用态或省略号时隐形 */
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* 鼠标悬停动效（自动排除当前激活项与禁用项） */
+.pagination a:not(.active):hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--primary-green);
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
+/* 当前处于激活状态的数字方格 */
+.pagination .active {
+    background: var(--primary-green) !important;
+    border-color: var(--primary-green) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    cursor: default;
+}
+
+/* 省略号专用样式：文字稍微淡化，但保留完好的物理背景，彻底消除空白鬼魂方格 */
+.pagination .ellipsis {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* 禁用状态（如第一页时的“首页”和“左箭头”）：完好保留方格底色，切断任何点击穿透 */
+.pagination .disabled {
+    opacity: 0.35;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: not-allowed;
+    pointer-events: none;        
+}
+
+/* ==========================================================================
+   
+   ========================================================================== */
+@media (max-width: 640px) {
+    .pagination {
+        gap: 0.25rem !important;        /* 移动端收紧方格间距，腾出空间 */
+    }
+    
+    .pagination a, 
+    .pagination span {
+        min-width: 1.85rem !important;  /* 稍微压缩方格宽度到约 30px */
+        height: 1.85rem !important;     /* 稍微压缩高度 */
+        padding: 0 0.3rem !important;   /* 极小边距 */
+        border-radius: 0.5rem !important;/* 圆角微调缩小，视觉更精致 */
+        font-size: 0.75rem !important;  /* 降低字号 */
+    }
+
+    /* 手机端直接隐藏“首页”和“尾页”的长文本节点，只让它们展示圆角空方格或隐藏 */
+    .pagination .nav-text {
+        display: none !important;       /* 隐藏首页/尾页四个汉字 */
+    }
+    
+    /* 调整手机端首页、尾页方格宽度，使其不占地方 */
+    .pagination .page-home,
+    .pagination .page-end {
+        min-width: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        margin: 0 !important;
+        overflow: hidden;
+        display: none !important;       /* 手机端直接完全隐藏首尾页，只靠箭头导航，最符合移动端规范 */
+    }
+}
 @keyframes move {
     from { transform: translate(0, 0); }
     to { transform: translate(100px, 100px); }
