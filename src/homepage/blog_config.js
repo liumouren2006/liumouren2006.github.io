@@ -4,9 +4,9 @@ const BLOG_CONFIG = {
             bio: "I record.",
             avatar: './src/pub/Avatar.jpg',
             social: [
-                { plarform: "GitHub", icon: "src/pub/GitHub_Invertocat_Black.svg", url: "https://github.com/liumouren2006" },
-                { plarform: "bilibili",icon: "src/pub/Bilibili_tv_a.svg", url: "https://bilibili.com" },
-                { plarform: "Mail",icon: "src/pub/mail.svg", url: "mailto:hello@example.com" }
+                { plarform: "GitHub", icon: "src/homepage/GitHub_Invertocat_Black.svg", url: "https://github.com/liumouren2006" },
+                { plarform: "bilibili",icon: "src/homepage/Bilibili_tv_a.svg", url: "https://bilibili.com" },
+                { plarform: "Mail",icon: "src/homepage/mail.svg", url: "mailto:hello@example.com" }
             ],
             articles: [
                 { id: 1, selected: false, title: "如何构建一个响应式的亚克力风格网页", date: "2024-05-10", category: "技术", excerpt: "探索 CSS Backdrop-filter 与现代 UI 设计的结合之路..." ,link: "Articles/template.html"},
