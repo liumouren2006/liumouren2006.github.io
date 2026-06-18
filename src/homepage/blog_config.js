@@ -13,6 +13,7 @@ const BLOG_CONFIG = {
                 { id: 2, selected: true, title: "Why objects move that way?", date: "2026-05-13", category: "物理", excerpt: "<i>Lorsqu'il arrive quelque changement dans la Nature, la quantité d'Action nécessaire pour ce changement est la plus petite qu'il soit possible.</i>" ,link: "Articles/template.html"},
                 { id: 3, selected: false, title: "这只是一个测试文章", date: "2026-05-13", category: "Test", excerpt: "干嘛...都说了只是测试。" ,link: "Articles/template.html"},
                 { id: 4, selected: true, title:"利用Fourier Transform绘制自己的图像", date:"2026-04-20" ,category: "数学", excerpt: "<i>我们小学二年级就学过的DFT (Discrete Fourier Transform) 能用来肝肾干么呢 ? <b>qwq</b></i>" ,link: "https://liumouren2006.github.io/DFT_Drawing"},
+                { id: 1, selected: false, title: "《教你制作自己的PCB画》", date: "2024-05-10", category: "技术", excerpt: "我要白嫖嘉立创PCB板" ,link: "Articles/Processerv_2.html"},
                 // { id: 5, selected: false, title: "这只是一个测试文章", date: "2026-05-13", category: "Test", excerpt: "干嘛...都说了只是测试。" ,link: "Articles/template.html"},
                 // { id: 6, selected: false, title: "这只是一个测试文章", date: "2026-05-13", category: "Test", excerpt: "干嘛...都说了只是测试。" ,link: "Articles/template.html"},
                 // { id: 7, selected: false, title: "这只是一个测试文章", date: "2026-05-13", category: "Test", excerpt: "干嘛...都说了只是测试。" ,link: "Articles/template.html"},
