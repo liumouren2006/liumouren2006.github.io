@@ -329,3 +329,10 @@ ul.pagination li a:hover:not(.active) {background-color: #ddd;} */
     from { transform: translate(0, 0); }
     to { transform: translate(100px, 100px); }
 }
+
+.bottom-fixed-rect {
+    position: fixed;
+    width: 100%;
+    height: 15vh;
+    bottom: 0;
+}
