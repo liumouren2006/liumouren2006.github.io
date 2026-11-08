@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一维时空洛伦兹变换 - 多事件管理、拖拽与自适应缩放</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <!-- KaTeX JS -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <!-- KaTeX Auto-render Extension -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0f172a; /* Tailwind slate-900 */
+            color: #f8fafc; /* Tailwind slate-50 */
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        canvas {
+            background-color: #1e293b; /* Tailwind slate-800 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .slider-container {
+            accent-color: #3b82f6; /* Tailwind blue-500 */
+        }
+        /* 自定义滚动条 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+    <link href="../src/pub/music_player.css" rel="stylesheet">
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6 my-4">
+        
+        <!-- 左侧控制面板 (占 4 列) -->
+        <div class="lg:col-span-4 bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col gap-5 h-[calc(100vh-2rem)] min-h-[600px] overflow-y-auto custom-scrollbar">
+            <div>
+                <h1 class="text-xl font-bold mb-1 text-blue-400">一维时空洛伦兹变换</h1>
+                <div class="text-xs text-slate-400 space-y-1">
+                    <p>时空事件点<b>固定在运动的“运动坐标系”上</b>。</p>
+                    <p>改变速度 $\beta$，观察事件如何在“我的系”（白网格 $x, ct$）移动，而在“运动系”（蓝红网格 $x', ct'$）中保持相对静止。</p>
+                </div>
+            </div>
+
+            <!-- 速度输入与调节 -->
+            <div class="bg-slate-700/50 p-4 rounded-lg flex flex-col gap-3">
+                <div class="flex justify-between items-center">
+                    <label class="font-semibold text-sm text-slate-300">运动系速度 $\beta = v/c$</label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" id="betaInput" min="-0.999" max="0.999" step="0.001" value="0.000" 
+                               class="w-20 bg-slate-900 border border-slate-600 rounded px-1.5 py-0.5 text-center text-sm font-mono text-blue-400 font-bold focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="betaSlider" min="-0.99" max="0.99" step="0.001" value="0" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span>$-0.99c$ (向左)</span>
+                        <span>$0$ (静止)</span>
+                        <span>$+0.99c$ (向右)</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono pt-1 border-t border-slate-600/50">
+                    <div class="text-slate-400">洛伦兹因子 $\gamma$:</div>
+                    <div id="gammaValue" class="text-emerald-400 text-right">1.000</div>
+                </div>
+            </div>
+
+            <!-- 事件管理区 -->
+            <div class="flex flex-col flex-1 min-h-[250px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-semibold text-slate-300">事件列表 (固定于运动系)</h3>
+                    <button id="clearEventsBtn" class="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 px-2 py-1 rounded transition-colors">清空全部</button>
+                </div>
+                <!-- 列表容器 -->
+                <div id="eventListContainer" class="flex-1 overflow-y-auto custom-scrollbar bg-slate-900/50 rounded-lg p-2 border border-slate-700/50 space-y-2 max-h-[300px]">
+                    <!-- 动态生成事件行 -->
+                    <div id="noEventsMsg" class="text-center text-slate-500 text-xs py-8">在右侧画布点击即可添加事件点</div>
+                </div>
+            </div>
+
+            <!-- 图例说明 -->
+            <div id="legendContainer" class="bg-slate-700/30 p-3 rounded-lg text-xs space-y-1.5">
+                <div class="flex items-center gap-2"><div class="w-4 h-0.5 bg-slate-500"></div> <span class="text-slate-300">“我的系”网格 $(x, ct)$</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-0.5 bg-blue-500"></div> <span class="text-blue-300">“运动系”空间轴/网格 $(x')$</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-0.5 bg-red-500"></div> <span class="text-red-300">“运动系”时间轴/网格 $(ct')$</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-0.5 bg-yellow-400 border-dashed border-t-2 border-yellow-400 bg-transparent"></div> <span class="text-yellow-300">光锥 $(x = \pm ct)$</span></div>
+            </div>
+        </div>
+
+        <!-- 右侧画布区 (占 8 列) -->
+        <div class="lg:col-span-8 flex justify-center items-center relative bg-slate-800/30 rounded-xl p-4">
+            <div class="relative w-full max-w-[600px] h-auto aspect-square">
+                <canvas id="spacetimeCanvas" width="600" height="600" class="w-full h-full rounded-xl"></canvas>
+                
+                <!-- 浮动缩放控制面板 -->
+                <div class="absolute top-4 right-4 flex flex-col gap-2 bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-lg border border-slate-700/50 shadow-lg z-10 select-none">
+                    <button id="zoomInBtn" title="放大 (Zoom In)" class="w-8 h-8 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold transition-all text-lg">+</button>
+                    <button id="zoomOutBtn" title="缩小 (Zoom Out)" class="w-8 h-8 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold transition-all text-lg">-</button>
+                    <button id="zoomResetBtn" title="重置视角" class="w-8 h-8 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 active:scale-95 text-blue-400 transition-all text-sm">↺</button>
+                </div>
+
+                <!-- 快速显示当前比例 -->
+                <div id="scaleBadge" class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded border border-slate-700/50 text-[10px] font-mono text-slate-400 pointer-events-none select-none">
+                    比例: 1.00x
+                </div>
+            </div>
+            
+            <!-- 快速提示 -->
+            <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs text-slate-400 pointer-events-none border border-slate-700/50 select-none">
+                💡 <b>左键拖拽</b>可移动事件点 | 点击空白处新增事件点 | <b>滚轮/右上角</b>可缩放视图
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('spacetimeCanvas');
+        const ctx = canvas.getContext('2d');
+        const betaSlider = document.getElementById('betaSlider');
+        const betaInput = document.getElementById('betaInput');
+        const gammaValueDisplay = document.getElementById('gammaValue');
+        const eventListContainer = document.getElementById('eventListContainer');
+        const noEventsMsg = document.getElementById('noEventsMsg');
+        const clearEventsBtn = document.getElementById('clearEventsBtn');
+        
+        // 缩放按钮及微章
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomResetBtn = document.getElementById('zoomResetBtn');
+        const scaleBadge = document.getElementById('scaleBadge');
+
+        // 坐标系配置
+        const width = canvas.width;
+        const height = canvas.height;
+        const originX = width / 2;
+        const originY = height / 2;
+        
+        // 缩放核心变量 (scale表示1单位长度占多少像素)
+        const DEFAULT_SCALE = 40;
+        let scale = DEFAULT_SCALE; 
+        const MIN_SCALE = 12; // 允许缩得极小以看清大范围
+        const MAX_SCALE = 200; // 允许放得极大看清局部细节
+
+        // 状态变量
+        let beta = 0;
+        let gamma = 1;
+        
+        // 拖拽状态
+        let draggedEventId = null;
+
+        // 事件点数组：存储在运动系下的坐标 { id, x_prime, ct_prime, color, isFixed }
+        let events = [
+            { id: 1, x_prime: 3, ct_prime: 2, color: '#a855f7', isFixed: false }, // 初始示例点 (紫色)
+            { id: 2, x_prime: -4, ct_prime: 4, color: '#f59e0b', isFixed: false } // 初始示例点 (橙色)
+        ];
+        let nextId = 3;
+
+        // 颜色池，供新增点循环使用
+        const colorPalette = [
+            '#a855f7', // 紫色
+            '#f59e0b', // 橙色
+            '#10b981', // 绿色
+            '#ec4899', // 粉色
+            '#06b6d4', // 青色
+            '#84cc16'  // 柠檬绿
+        ];
+
+        // 物理工具函数
+        function calcGamma(b) {
+            return 1 / Math.sqrt(1 - b * b);
+        }
+
+        // 调用 KaTeX 对特定 DOM 元素中的 LaTeX 公式进行渲染
+        function triggerKaTeX(element = document.body) {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        // 动态网格线范围计算：根据当前缩放比例，计算出应该画多少格线才能铺满画布
+        function getDynamicGridLimit() {
+            // 画布单向半宽对应的最大物理坐标
+            const visibleMax = Math.ceil((width / 2) / scale);
+            // 加上 4 格作为变换扭曲时的边缘缓冲，防止边缘由于倾斜而穿帮
+            return visibleMax + 6;
+        }
+
+        // 坐标映射：物理坐标 (x, ct) -> 像素坐标
+        function mapToPixel(x, ct) {
+            return {
+                px: originX + x * scale,
+                py: originY - ct * scale
+            };
+        }
+
+        // 逆坐标映射：像素坐标 -> 物理坐标 (静止系)
+        function mapToCoords(px, py) {
+            return {
+                x: (px - originX) / scale,
+                ct: (originY - py) / scale
+            };
+        }
+
+        // 洛伦兹变换 (静止系 -> 运动系)
+        function lorentzTransform(x, ct, b, g) {
+            return {
+                x_prime: g * (x - b * ct),
+                ct_prime: g * (ct - b * x)
+            };
+        }
+
+        // 逆洛伦兹变换 (运动系 -> 静止系)
+        function inverseLorentzTransform(x_prime, ct_prime, b, g) {
+            return {
+                x: g * (x_prime + b * ct_prime),
+                ct: g * (ct_prime + b * x_prime)
+            };
+        }
+
+        // 视角缩放逻辑
+        function adjustScale(amount) {
+            scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + amount));
+            // 更新放大比例微章
+            const ratio = scale / DEFAULT_SCALE;
+            scaleBadge.textContent = `比例: ${ratio.toFixed(2)}x`;
+            draw();
+            renderEventList();
+        }
+
+        function resetScale() {
+            scale = DEFAULT_SCALE;
+            scaleBadge.textContent = `比例: 1.00x`;
+            draw();
+            renderEventList();
+        }
+
+        // 更新速度相关的输入状态
+        function updateBeta(newBeta) {
+            // 限制范围在 -0.999c 到 0.999c
+            beta = Math.max(-0.999, Math.min(0.999, newBeta));
+            gamma = calcGamma(beta);
+
+            // 保持滑块 and 输入框步调一致
+            betaSlider.value = beta;
+            betaInput.value = beta.toFixed(3);
+            gammaValueDisplay.textContent = gamma.toFixed(3);
+
+            draw();
+            renderEventList();
+        }
+
+        // 绘制主流程
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            const gridLimit = getDynamicGridLimit();
+
+            drawStationaryGrid(gridLimit); // 1. 绘制静止系网格
+            drawLightCone(gridLimit);       // 2. 绘制光锥
+            drawMovingGrid(gridLimit);     // 3. 绘制运动系（运动系）网格
+            drawAxes(gridLimit);           // 4. 绘制坐标主轴
+
+            // 5. 绘制所有事件点及其投影
+            events.forEach(ev => {
+                drawEventOnMovingFrame(ev);
+            });
+        }
+
+        // 绘制静止系（我的系）网格 (白灰色)
+        function drawStationaryGrid(gridLimit) {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.beginPath();
+            for (let i = -gridLimit; i <= gridLimit; i++) {
+                let p1 = mapToPixel(i, -gridLimit);
+                let p2 = mapToPixel(i, gridLimit);
+                ctx.moveTo(p1.px, p1.py);
+                ctx.lineTo(p2.px, p2.py);
+                let p3 = mapToPixel(-gridLimit, i);
+                let p4 = mapToPixel(gridLimit, i);
+                ctx.moveTo(p3.px, p3.py);
+                ctx.lineTo(p4.px, p4.py);
+            }
+            ctx.stroke();
+        }
+
+        // 绘制黄色虚线光锥 (恒定不变)
+        function drawLightCone(gridLimit) {
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+            ctx.setLineDash([8, 8]);
+            
+            ctx.beginPath();
+            let p1 = mapToPixel(-gridLimit, -gridLimit);
+            let p2 = mapToPixel(gridLimit, gridLimit);
+            ctx.moveTo(p1.px, p1.py);
+            ctx.lineTo(p2.px, p2.py);
+            ctx.stroke();
+
+            ctx.beginPath();
+            let p3 = mapToPixel(-gridLimit, gridLimit);
+            let p4 = mapToPixel(gridLimit, -gridLimit);
+            ctx.moveTo(p3.px, p3.py);
+            ctx.lineTo(p4.px, p4.py);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+        }
+
+        // 绘制运动系（运动系）网格 (随速度剪切扭曲)
+        function drawMovingGrid(gridLimit) {
+            ctx.lineWidth = 1;
+            
+            // 恒定 ct' 的网格线 (红色系)
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.25)';
+            ctx.beginPath();
+            for (let ct_prime = -gridLimit; ct_prime <= gridLimit; ct_prime++) {
+                if (ct_prime === 0) continue; 
+                let pStart = inverseLorentzTransform(-gridLimit, ct_prime, beta, gamma);
+                let pEnd = inverseLorentzTransform(gridLimit, ct_prime, beta, gamma);
+                let pixStart = mapToPixel(pStart.x, pStart.ct);
+                let pixEnd = mapToPixel(pEnd.x, pEnd.ct);
+                ctx.moveTo(pixStart.px, pixStart.py);
+                ctx.lineTo(pixEnd.px, pixEnd.py);
+            }
+            ctx.stroke();
+
+            // 恒定 x' 的网格线 (蓝色系)
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.25)';
+            ctx.beginPath();
+            for (let x_prime = -gridLimit; x_prime <= gridLimit; x_prime++) {
+                if (x_prime === 0) continue; 
+                let pStart = inverseLorentzTransform(x_prime, -gridLimit, beta, gamma);
+                let pEnd = inverseLorentzTransform(x_prime, gridLimit, beta, gamma);
+                let pixStart = mapToPixel(pStart.x, pStart.ct);
+                let pixEnd = mapToPixel(pEnd.x, pEnd.ct);
+                ctx.moveTo(pixStart.px, pixStart.py);
+                ctx.lineTo(pixEnd.px, pixEnd.py);
+            }
+            ctx.stroke();
+        }
+
+        // 绘制主坐标轴
+        function drawAxes(gridLimit) {
+            ctx.lineWidth = 2;
+
+            // 我的系 x 轴 & ct 轴
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            let sxStart = mapToPixel(-gridLimit, 0); let sxEnd = mapToPixel(gridLimit, 0);
+            ctx.moveTo(sxStart.px, sxStart.py); ctx.lineTo(sxEnd.px, sxEnd.py);
+            let stStart = mapToPixel(0, -gridLimit); let stEnd = mapToPixel(0, gridLimit);
+            ctx.moveTo(stStart.px, stStart.py); ctx.lineTo(stEnd.px, stEnd.py);
+            ctx.stroke();
+
+            //运动 系 x' 轴 (ct'=0) -> 蓝色
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)'; 
+            ctx.beginPath();
+            let mxStart = inverseLorentzTransform(-gridLimit, 0, beta, gamma);
+            let mxEnd = inverseLorentzTransform(gridLimit, 0, beta, gamma);
+            let pixMxStart = mapToPixel(mxStart.x, mxStart.ct);
+            let pixMxEnd = mapToPixel(mxEnd.x, mxEnd.ct);
+            ctx.moveTo(pixMxStart.px, pixMxStart.py); ctx.lineTo(pixMxEnd.px, pixMxEnd.py);
+            ctx.stroke();
+
+            // 运动系 ct' 轴 (x'=0) -> 红色
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)'; 
+            ctx.beginPath();
+            let mtStart = inverseLorentzTransform(0, -gridLimit, beta, gamma);
+            let mtEnd = inverseLorentzTransform(0, gridLimit, beta, gamma);
+            let pixMtStart = mapToPixel(mtStart.x, mtStart.ct);
+            let pixMtEnd = mapToPixel(mtEnd.x, mtEnd.ct);
+            ctx.moveTo(pixMtStart.px, pixMtStart.py);
+            ctx.lineTo(pixMtEnd.px, pixMtEnd.py);
+            ctx.stroke();
+        }
+
+        // 绘制事件及其投影辅助线
+        function drawEventOnMovingFrame(ev) {
+            // 通过逆洛伦兹变换获得在静止系（画布）的位置
+            let statCoords = inverseLorentzTransform(ev.x_prime, ev.ct_prime, beta, gamma);
+            let px = mapToPixel(statCoords.x, statCoords.ct);
+
+            // 1. 投影到运动系 (沿着网格虚线分别投影到 x' 轴和 ct' 轴)
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 4]);
+
+            // 到 x' 轴 (平行于 ct' 轴)
+            let pxPrimeOnAxis = inverseLorentzTransform(ev.x_prime, 0, beta, gamma);
+            let pPixProjXPrime = mapToPixel(pxPrimeOnAxis.x, pxPrimeOnAxis.ct);
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
+            ctx.beginPath();
+            ctx.moveTo(px.px, px.py);
+            ctx.lineTo(pPixProjXPrime.px, pPixProjXPrime.py);
+            ctx.stroke();
+
+            // 到 ct' 轴 (平行于 x' 轴)
+            let ptPrimeOnAxis = inverseLorentzTransform(0, ev.ct_prime, beta, gamma);
+            let pPixProjTPrime = mapToPixel(ptPrimeOnAxis.x, ptPrimeOnAxis.ct);
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+            ctx.beginPath();
+            ctx.moveTo(px.px, px.py);
+            ctx.lineTo(pPixProjTPrime.px, pPixProjTPrime.py);
+            ctx.stroke();
+
+            // 2. 投影到静止的我的系 (直角正交虚线)
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            let pProjX = mapToPixel(statCoords.x, 0);
+            let pProjT = mapToPixel(0, statCoords.ct);
+            ctx.moveTo(px.px, px.py);
+            ctx.lineTo(pProjX.px, pProjX.py);
+            ctx.moveTo(px.px, px.py);
+            ctx.lineTo(pProjT.px, pProjT.py);
+            ctx.stroke();
+
+            ctx.setLineDash([]); // 恢复实线
+
+            // 3. 绘制事件主体和编号
+            ctx.fillStyle = ev.color;
+            ctx.beginPath();
+            ctx.arc(px.px, px.py, 7, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = ev.isFixed ? '#ef4444' : 'white'; // 如果锁定了，边框显现一点红
+            ctx.lineWidth = ev.isFixed ? 2 : 1.5;
+            ctx.stroke();
+
+            // 标出编号数字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ev.id, px.px, px.py);
+            
+            // 如果被锁定，在旁边画一个小锁标记
+            if (ev.isFixed) {
+                ctx.fillStyle = '#f87171';
+                ctx.font = '10px sans-serif';
+                ctx.fillText('🔒', px.px + 12, px.py - 6);
+            }
+        }
+
+        // 渲染左侧面板的事件点管理列表
+        function renderEventList() {
+            // 清空列表
+            eventListContainer.innerHTML = '';
+
+            if (events.length === 0) {
+                noEventsMsg.classList.remove('hidden');
+                eventListContainer.appendChild(noEventsMsg);
+                return;
+            }
+
+            noEventsMsg.classList.add('hidden');
+
+            events.forEach(ev => {
+                let statCoords = inverseLorentzTransform(ev.x_prime, ev.ct_prime, beta, gamma);
+
+                // 创建单行管理组件
+                const card = document.createElement('div');
+                card.className = `bg-slate-800 p-3 rounded-lg border-l-4 flex flex-col gap-2 transition-all shadow-md ${ev.isFixed ? 'opacity-90' : ''}`;
+                card.style.borderColor = ev.color;
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-xs flex items-center gap-1" style="color: ${ev.color}">
+                            <span class="inline-block w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center font-mono font-bold" style="background-color: ${ev.color}">${ev.id}</span>
+                            事件 #${ev.id}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <!-- 固定状态切换标签按钮 -->
+                            <button class="lock-btn text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium ${ev.isFixed ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}" data-id="${ev.id}">
+                                ${ev.isFixed ? '🔒 已固定' : '🔓 可拖拽'}
+                            </button>
+                            <button class="delete-btn text-[10px] text-slate-400 hover:text-red-400 font-semibold uppercase" data-id="${ev.id}">删除</button>
+                        </div>
+                    </div>
+                    <!-- 坐标显示与编辑 -->
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <!-- 运动系输入 (可直接修改) -->
+                        <div class="flex flex-col gap-1 bg-slate-900/40 p-1.5 rounded">
+                            <span class="text-blue-300 font-bold">运动系 $(x', ct')$</span>
+                            <div class="flex gap-1 items-center">
+                                <span class="text-slate-500">$x'$:</span>
+                                <input type="number" step="0.1" value="${ev.x_prime.toFixed(1)}" data-field="x_prime" data-id="${ev.id}" 
+                                       class="edit-coord w-full bg-slate-900 border border-slate-700 rounded px-1 text-center font-mono text-white focus:outline-none focus:border-blue-500"
+                                       ${ev.isFixed ? 'disabled class="opacity-55 cursor-not-allowed"' : ''}>
+                            </div>
+                            <div class="flex gap-1 items-center mt-1">
+                                <span class="text-slate-500">$ct'$:</span>
+                                <input type="number" step="0.1" value="${ev.ct_prime.toFixed(1)}" data-field="ct_prime" data-id="${ev.id}" 
+                                       class="edit-coord w-full bg-slate-900 border border-slate-700 rounded px-1 text-center font-mono text-white focus:outline-none focus:border-red-500"
+                                       ${ev.isFixed ? 'disabled class="opacity-55 cursor-not-allowed"' : ''}>
+                            </div>
+                        </div>
+                        <!-- 我的系计算结果 (只读显示) -->
+                        <div class="flex flex-col justify-center bg-slate-900/20 p-1.5 rounded text-slate-400 font-mono">
+                            <span class="text-slate-400 font-bold mb-1">我的系 $(x, ct)$</span>
+                            <div>x : <span class="text-slate-200">${statCoords.x.toFixed(2)}</span></div>
+                            <div class="mt-1">ct: <span class="text-slate-200">${statCoords.ct.toFixed(2)}</span></div>
+                        </div>
+                    </div>
+                `;
+
+                eventListContainer.appendChild(card);
+            });
+
+            // 针对动态生成的内容，重新触发一次 KaTeX 公式排版渲染
+            triggerKaTeX(eventListContainer);
+
+            // 绑定删除按钮事件
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    events = events.filter(ev => ev.id !== id);
+                    if (draggedEventId === id) draggedEventId = null;
+                    draw();
+                    renderEventList();
+                });
+            });
+
+            // 绑定锁定/固定切换按钮事件
+            document.querySelectorAll('.lock-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const ev = events.find(item => item.id === id);
+                    if (ev) {
+                        ev.isFixed = !ev.isFixed;
+                        draw();
+                        renderEventList();
+                    }
+                });
+            });
+
+            // 绑定坐标输入框修改事件
+            document.querySelectorAll('.edit-coord').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const field = e.target.dataset.field;
+                    const value = parseFloat(e.target.value);
+                    
+                    if (!isNaN(value)) {
+                        const ev = events.find(item => item.id === id);
+                        if (ev && !ev.isFixed) {
+                            ev[field] = value;
+                            draw();
+                            renderEventList(); 
+                        }
+                    }
+                });
+            });
+        }
+
+        // 获取鼠标或触摸在Canvas上的相对像素坐标
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            return {
+                px: (clientX - rect.left) * scaleX,
+                py: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // 根据画布像素位置查找附近的事件点 (点击/触摸判定)
+        function findEventAt(px, py) {
+            const clickRadius = 15; 
+            for (let i = 0; i < events.length; i++) {
+                const ev = events[i];
+                const statCoords = inverseLorentzTransform(ev.x_prime, ev.ct_prime, beta, gamma);
+                const evPix = mapToPixel(statCoords.x, statCoords.ct);
+                const dist = Math.hypot(px - evPix.px, py - evPix.py);
+                if (dist <= clickRadius) {
+                    return ev;
+                }
+            }
+            return null;
+        }
+
+        // 控制输入监听
+        betaSlider.addEventListener('input', (e) => {
+            updateBeta(parseFloat(e.target.value));
+        });
+
+        betaInput.addEventListener('change', (e) => {
+            let val = parseFloat(e.target.value);
+            if (isNaN(val)) val = 0;
+            updateBeta(val);
+        });
+
+        betaInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                betaInput.blur();
+            }
+        });
+
+        // 交互逻辑：按下鼠标 / 开始触摸
+        function handleStart(e) {
+            const coords = getCanvasCoords(e);
+            const targetEvent = findEventAt(coords.px, coords.py);
+
+            if (targetEvent) {
+                if (!targetEvent.isFixed) {
+                    draggedEventId = targetEvent.id;
+                    canvas.style.cursor = 'grabbing';
+                }
+            } else {
+                let clickedCoords = mapToCoords(coords.px, coords.py);
+                let primeCoords = lorentzTransform(clickedCoords.x, clickedCoords.ct, beta, gamma);
+                const color = colorPalette[nextId % colorPalette.length];
+
+                events.push({
+                    id: nextId++,
+                    x_prime: parseFloat(primeCoords.x_prime.toFixed(2)),
+                    ct_prime: parseFloat(primeCoords.ct_prime.toFixed(2)),
+                    color: color,
+                    isFixed: false 
+                });
+
+                draw();
+                renderEventList();
+            }
+            
+            if (e.cancelable) e.preventDefault();
+        }
+
+        // 交互逻辑：移动鼠标 / 滑动触摸
+        function handleMove(e) {
+            if (draggedEventId !== null) {
+                const coords = getCanvasCoords(e);
+                const ev = events.find(item => item.id === draggedEventId);
+                
+                if (ev && !ev.isFixed) {
+                    let currentCoords = mapToCoords(coords.px, coords.py);
+                    let primeCoords = lorentzTransform(currentCoords.x, currentCoords.ct, beta, gamma);
+                    
+                    ev.x_prime = parseFloat(primeCoords.x_prime.toFixed(2));
+                    ev.ct_prime = parseFloat(primeCoords.ct_prime.toFixed(2));
+
+                    draw();
+                    renderEventList();
+                }
+                if (e.cancelable) e.preventDefault();
+            } else {
+                const coords = getCanvasCoords(e);
+                const targetEvent = findEventAt(coords.px, coords.py);
+                if (targetEvent) {
+                    canvas.style.cursor = targetEvent.isFixed ? 'not-allowed' : 'grab';
+                } else {
+                    canvas.style.cursor = 'crosshair';
+                }
+            }
+        }
+
+        // 交互逻辑：松开鼠标 / 结束触摸
+        function handleEnd() {
+            if (draggedEventId !== null) {
+                draggedEventId = null;
+                canvas.style.cursor = 'crosshair';
+            }
+        }
+
+        // 绑定鼠标事件
+        canvas.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove); 
+        window.addEventListener('mouseup', handleEnd);
+
+        // 绑定触摸事件
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        canvas.addEventListener('touchmove', handleMove, { passive: false });
+        canvas.addEventListener('touchend', handleEnd);
+
+        // 鼠标滚轮缩放
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomAmount = e.deltaY < 0 ? 4 : -4;
+            adjustScale(zoomAmount);
+        }, { passive: false });
+
+        // 缩放按钮交互
+        zoomInBtn.addEventListener('click', () => adjustScale(6));
+        zoomOutBtn.addEventListener('click', () => adjustScale(-6));
+        zoomResetBtn.addEventListener('click', resetScale);
+
+        // 清空所有点
+        clearEventsBtn.addEventListener('click', () => {
+            events = [];
+            draggedEventId = null;
+            draw();
+            renderEventList();
+        });
+
+        // 初始化
+        // 在 DOM 解析完全并且 document.body 存在时，触发初始的 KaTeX 渲染
+        triggerKaTeX(document.body);
+        updateBeta(0);
+
+    </script>
+    <script src="../src/pub/music/playlist.js" defer></script>
+    <script src="../src/pub/music_player.js" defer></script>
+</body>
+</html>
